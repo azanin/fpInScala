@@ -140,7 +140,7 @@ object List {
         case Nil => sys.error("init of empty list")
         case Cons(head, tail) =>
           if (!predicate(head))
-            dropWhile(ts)(predicate)
+            dropWhile(tail)(predicate)
           else ts
       }
 

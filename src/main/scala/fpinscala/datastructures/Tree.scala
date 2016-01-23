@@ -28,6 +28,29 @@ object Tree {
     case Branch(l, r) => (1 + depth(l)) max (1 + depth(r)) // or 1 + (depth(l) max depth(r))
   }
 
+  //EXERCISE 28: Write a function map
+  def map[A, B](t: Tree[A])(f: A => B): Tree[B] = t match {
+    case Leaf(v) => Leaf(f(v))
+    case Branch(l, r) => Branch(map(l)(f), map(r)(f))
+  }
+
+
+  //EXERCISE 29: Generalize size, maximum, depth, and map, writing a new function fold that abstracts over their similarities.
+  // Reimplement them in terms of this more general function.
+
+  def fold[A, B](t: Tree[A])(f: A => B)(g: (B, B) => B): B = t match {
+    case Leaf(a) => f(a)
+    case Branch(l, r) => g(fold(l)(f)(g), fold(r)(f)(g))
+  }
+
+  def sizeViaFold[A](t: Tree[A]): Int =
+    fold(t)(_ => 1)(1 + _ + _)
+
+  def maximumViaFold(t: Tree[Int]): Int =
+    fold(t)(a => a)((l, r) => l max r)
+
+  def depthViaFold[A](t: Tree[A]): Int =
+    fold(t)(a => 0)((b, c) => 1 + (b max c))
 }
 
 object main extends App {
@@ -36,5 +59,9 @@ object main extends App {
   val tree = Branch(Branch(Leaf("leaf"), Leaf("leaf")), Leaf("leaf"))
 
   println(Tree.size(tree))
-  print(Tree.depth(tree))
+  println(Tree.depth(tree))
+  println(Tree.map(tree)((a) => a.size))
+  println(Tree.sizeViaFold(tree) == Tree.size(tree))
+
+
 }

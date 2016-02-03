@@ -32,6 +32,16 @@ trait Stream[+A] {
     case Empty => z
     case Cons(h, t) => f(h(), t().foldRight(z)(f))
   }
+
+  def map[B](f: A => B): Stream[B] =
+    foldRight(Empty: Stream[B])((elem, acc) => Cons(() => f(elem), () => acc))
+
+  def append[B >: A](s: Stream[B]):Stream[B] =
+    foldRight(s:Stream[B])((elem,acc) => Cons(() => elem,() => acc) )
+
+  def flatMap[B](f: A => Stream[B]) :Stream[B] =
+    foldRight(Empty:Stream[B])((elem,acc) => acc.append(f(elem)))
+
 }
 
 case object Empty extends Stream[Nothing]
@@ -66,6 +76,7 @@ object main extends App {
   println(streamInts.take(3).toList)
   println(streamInts.takeWhile(x => x < 2).toList)
   println(streamInts.takeWhileViaFoldRight(x => x < 2).toList)
+
 
 
 }

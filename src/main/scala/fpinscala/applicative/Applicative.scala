@@ -1,10 +1,10 @@
-package fpinscala.applicative
+package fpinscala.ApplicativeA
 
-sealed trait Functor[F[_]] {
+sealed trait FunctorA[F[_]] {
   def map[A, B](fa: F[A])(f: A => B): F[B]
 }
 
-sealed trait Applicative[F[_]] extends Functor[F] {
+sealed trait ApplicativeA[F[_]] extends FunctorA[F] {
 
   def map2[A, B, C](fa: F[A], fb: F[B])(f: (A, B) => C): F[C] = {
     // val a = map(fa)(a => f(a,_))
@@ -39,6 +39,10 @@ sealed trait Applicative[F[_]] extends Functor[F] {
   }
 
 
+  def apply[A, B](fa: F[A])(fab: F[A => B]): F[B]
+
+  def unit[A](a: A): F[A]
+
   /** *
     * The action of apply is similar to the familiar map. Both are a kind of function
     * application in a context, but there's a very specific difference. In the case of
@@ -56,13 +60,9 @@ sealed trait Applicative[F[_]] extends Functor[F] {
     apply(fa)(unit(f))
   }
 
-  def apply[A, B](fa: F[A])(fab: F[A => B]): F[B]
-
-  def unit[A](a: A): F[A]
-
-  def compose[G[_]](appG: Applicative[G]): Applicative[({type f[x] = F[G[x]]})#f] = {
+  def compose[G[_]](appG: ApplicativeA[G]): ApplicativeA[({type f[x] = F[G[x]]})#f] = {
     val self = this
-    new Applicative[({ type f[x] = F[G[x]]})#f] {
+    new ApplicativeA[({ type f[x] = F[G[x]]})#f] {
       override def apply[A, B](fga: F[G[A]])(fgab: F[G[A => B]]): F[G[B]] = {
         val x: F[G[A] => G[B]]= self.map(fgab)(appG.flip)
         self.apply(fga)(x)
@@ -73,9 +73,9 @@ sealed trait Applicative[F[_]] extends Functor[F] {
 
   def flip[A, B](gab: F[A => B]): F[A] => F[B] = ga => apply(ga)(gab)
 
-  def product[G[_]](appG: Applicative[G]): Applicative[({type f[x] = (F[x], G[x])})#f] = {
+  def product[G[_]](appG: ApplicativeA[G]): ApplicativeA[({type f[x] = (F[x], G[x])})#f] = {
     val self = this
-    new Applicative[({type f[x] = (F[x], G[x])})#f] {
+    new ApplicativeA[({type f[x] = (F[x], G[x])})#f] {
 
       override def unit[A](a: A): (F[A], G[A]) = {
         val fa: F[A] = self.unit(a)
@@ -90,22 +90,18 @@ sealed trait Applicative[F[_]] extends Functor[F] {
       }
     }
   }
-
-
 }
 
-object Applicative {
-
+object ApplicativeA {
 
   /** *You can see that this method combines two Options. But one of them
     * contains a function (unless it is None of course). The action of apply is to apply
     * the function inside one argument to the value inside the other. This is the origin of
-    * the name "applicative". This operation is sometimes called idiomatic function
+    * the name "ApplicativeA". This operation is sometimes called idiomatic function
     * application since it occurs within some idiom or context. ***/
   def apply[A, B](oab: Option[A => B])(oa: Option[A]): Option[B] =
     (oab, oa) match {
       case (Some(f), Some(a)) => Some(f(a))
       case _ => None
     }
-
 }

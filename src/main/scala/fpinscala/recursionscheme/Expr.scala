@@ -34,7 +34,7 @@ object Expr {
   }
 
 
-  def countNodes: Term.Algebra[Expr, Int] = {
+  val countNodes: Term.Algebra[Expr, Int] = {
     case Index(x, y) => x + y + 1
     case Literal(_) => 1
     case Ident(_) => 1
@@ -42,6 +42,17 @@ object Expr {
     case Binary(lhs, _, rhs) => lhs + rhs + 1
     case Call(func, args) => args.sum + func + 1
     case Paren(target) => target + 1
+  }
+
+
+  val prettyPrint: Term.Algebra[Expr, String] = {
+    case Index(x, y) => s"$x[$y]"
+    case Literal(l) => l.toString
+    case Ident(i) => i
+    case Unary(op, target) => s"$op $target"
+    case Binary(lhs, op, rhs) => s"$lhs $op $rhs"
+    case Call(func, args) => func + s"(${args.mkString(",")})"
+    case Paren(target) => s"($target)"
   }
 
   /* def bottomUp(term: Term[Expr])(fn: Term[Expr] => Term[Expr])(functor: Functor[Expr]): Term[Expr] = {

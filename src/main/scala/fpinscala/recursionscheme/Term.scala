@@ -53,4 +53,5 @@ object Term {
 
     out >>> fmap >>> algebra
   }
+}
 

@@ -1,6 +1,8 @@
 
 package fpinscala.recursionscheme
 
+import fpinscala.recursionscheme.Expr.{Call, Expr, Ident, Literal, Unary}
+
 import scalaz.Functor
 
 object Main extends App {
@@ -11,6 +13,7 @@ object Main extends App {
   val add = Term[Expr](Ident("add"))
   val call = Term[Expr](Call(func = add, Seq(ten, five)))
 
+  val unary = Term[Expr](Unary("call", call))
 
   val transformLiterals: Term[Expr] => Term[Expr] = {
     term => term.out match {
@@ -23,9 +26,13 @@ object Main extends App {
 
   println(call.out)
   val bottomUp = Term.bottomUp[Expr](transformLiterals)
-  println(bottomUp(call).out)
+  println(bottomUp(unary).out)
 
-  val cata: Term[Expr] => Int = Term.cata(Expr.countNodes)
-  println(cata(call))
+  val countNodes: Term[Expr] => Int = Term.cata(Expr.countNodes)
+  println(countNodes(unary))
+
+  val prettyPrint: Term[Expr] => String = Term.cata(Expr.prettyPrint)
+  println(prettyPrint(unary))
+
 
 }

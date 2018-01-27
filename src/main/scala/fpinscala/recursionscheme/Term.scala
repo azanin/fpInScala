@@ -28,6 +28,15 @@ object Term {
     out >>> fmap >>> in >>> fn
   }
 
+  def bottomViaCata[F[_]](fn: Term[F] => Term[F])(implicit functor: Functor[F]): Term[F] => Term[F] = {
+    import scalaz.std.function._
+    import scalaz.syntax.arrow._
+
+    val in: F[Term[F]] => Term[F] = Term(_)
+
+    cata(in >>> fn)
+  }
+
   /*
     def mistery[F[_], A](fn: F[A] => A)(functor: Functor[F]): Term[F] => A = {
       import scalaz.std.function._

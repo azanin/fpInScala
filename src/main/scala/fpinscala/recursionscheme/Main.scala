@@ -1,6 +1,10 @@
+
 package fpinscala.recursionscheme
 
+import scalaz.Functor
+
 object Main extends App {
+
 
   val ten = Term[Expr](Literal(10))
   val five = Term[Expr](Literal(5))
@@ -15,7 +19,13 @@ object Main extends App {
       case _ => term
     }
   }
+  implicit val functor: Functor[Expr] = Expr.exprFunctor
 
   println(call.out)
-  println(Term.bottomUp[Expr](transformLiterals)(Expr.exprFunctor)(call).out)
+  val bottomUp = Term.bottomUp[Expr](transformLiterals)
+  println(bottomUp(call).out)
+
+  val cata: Term[Expr] => Int = Term.cata(Expr.countNodes)
+  println(cata(call))
+
 }

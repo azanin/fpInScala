@@ -34,23 +34,35 @@ object Expr {
   }
 
 
-  def bottomUp(term: Term[Expr])(fn: Term[Expr] => Term[Expr])(functor: Functor[Expr]): Term[Expr] = {
-    val expr: Expr[Term[Expr]] = term.out
-    fn(Term(functor.map(expr)(t => bottomUp(t)(fn)(functor))))
+  def countNodes: Term.Algebra[Expr, Int] = {
+    case Index(x, y) => x + y + 1
+    case Literal(_) => 1
+    case Ident(_) => 1
+    case Unary(_, target) => target + 1
+    case Binary(lhs, _, rhs) => lhs + rhs + 1
+    case Call(func, args) => args.sum + func + 1
+    case Paren(target) => target + 1
   }
+
+  /* def bottomUp(term: Term[Expr])(fn: Term[Expr] => Term[Expr])(functor: Functor[Expr]): Term[Expr] = {
+     val expr: Expr[Term[Expr]] = term.out
+     fn(Term(functor.map(expr)(t => bottomUp(t)(fn)(functor))))
+   }*/
 }
 
 case class Term[F[_]](out: F[Term[F]])
 
 object Term {
 
-  def bottomUp[F[_]](fn: Term[F] => Term[F])(functor: Functor[F]): Term[F] => Term[F] = { term =>
+  type Algebra[F[_], A] = F[A] => A
+
+  def bottomUp[F[_]](fn: Term[F] => Term[F])(implicit functor: Functor[F]): Term[F] => Term[F] = { term =>
     val expr: F[Term[F]] = term.out
     fn(Term(functor.map(expr)(bottomUp(fn)(functor))))
   }
 
 
-  def bottomUpArrow[F[_]](fn: Term[F] => Term[F])(functor: Functor[F]): Term[F] => Term[F] = {
+  def bottomUpArrow[F[_]](fn: Term[F] => Term[F])(implicit functor: Functor[F]): Term[F] => Term[F] = {
     import scalaz.std.function._
     import scalaz.syntax.arrow._
 
@@ -61,8 +73,33 @@ object Term {
 
     val in: F[Term[F]] => Term[F] = Term(_)
 
-
     out >>> fmap >>> in >>> fn
+  }
+
+/*
+  def mistery[F[_], A](fn: F[A] => A)(functor: Functor[F]): Term[F] => A = {
+    import scalaz.std.function._
+    import scalaz.syntax.arrow._
+
+    val out: Term[F] => F[Term[F]] = _.out
+    val fmap: F[Term[F]] => F[A] = {
+      functor.map(_)(mistery(fn)(functor))
+    }
+
+    out >>> fmap >>> fn
+  }*/
+
+
+  def cata[F[_], A](algebra: Algebra[F, A])(implicit functor: Functor[F]): Term[F] => A = {
+    import scalaz.std.function._
+    import scalaz.syntax.arrow._
+
+    val out: Term[F] => F[Term[F]] = _.out
+    val fmap: F[Term[F]] => F[A] = {
+      functor.map(_)(cata(algebra)(functor))
+    }
+
+    out >>> fmap >>> algebra
   }
 
 }
